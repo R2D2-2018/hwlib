@@ -16,6 +16,10 @@
 #define HWLIB_QUOTE( FILE ) #FILE
 #define HWLIB_INCLUDE( FILE ) HWLIB_QUOTE( FILE )
 
+#ifdef BMPTK_TARGET_test
+   #include HWLIB_INCLUDE( hwlib-test.hpp )
+#endif
+
 #ifdef BMPTK_TARGET_arduino_due
    #include HWLIB_INCLUDE( hwlib-arduino-due.hpp )
 #endif
