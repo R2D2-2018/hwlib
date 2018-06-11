@@ -269,19 +269,19 @@ namespace hwlib {
 namespace target = ::test;
 namespace test = ::test;
 
+#ifdef HWLIB_ONCE
+
 void HWLIB_WEAK uart_putc( char c ){
-   test::uart_putc( c );
+   target::uart_putc(c);
 }
 
 bool HWLIB_WEAK uart_char_available(){
-   return test::uart_char_available();
+   return 1;
 }
 
 char HWLIB_WEAK uart_getc( ){
-   return test::uart_getc();
+   return target::uart_getc();
 }
-
-#ifdef HWLIB_ONCE
 
 uint64_t now_ticks(){
    return target::now_ticks();
