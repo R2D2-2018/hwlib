@@ -27,8 +27,6 @@
 #include HWLIB_INCLUDE ( chrono )
 #include HWLIB_INCLUDE ( thread )
 
-namespace hwlib {
-
 namespace test {
 
 void wait_ns( int_fast32_t n );
