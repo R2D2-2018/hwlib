@@ -27,8 +27,6 @@
 #include HWLIB_INCLUDE ( chrono )
 #include HWLIB_INCLUDE ( thread )
 
-namespace hwlib {
-
 namespace test {
 
 void wait_ns( int_fast32_t n );
@@ -39,11 +37,18 @@ char uart_getc();
 void uart_putc( char c );
 
 #ifdef HWLIB_ONCE
-auto begin = std::chrono::high_resolution_clock::now();
+bool now_ticks_begin_initialized = false;
 
 uint64_t now_ticks(){
+   static decltype(std::chrono::high_resolution_clock::now()) begin;
+
+   if (!now_ticks_begin_initialized) {
+      begin = std::chrono::high_resolution_clock::now();
+      now_ticks_begin_initialized = true;
+   }
+
    auto end = std::chrono::high_resolution_clock::now();
-   return std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+   return std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count();
 }   
 
 uint64_t ticks_per_us(){
@@ -52,23 +57,19 @@ uint64_t ticks_per_us(){
 
 uint64_t now_us(){
    return now_ticks() / ticks_per_us();
-}   
+}
 
-void wait_us_busy( int_fast32_t n ){
+void HWLIB_WEAK wait_us( int_fast32_t n ){ 
+   std::this_thread::sleep_for(std::chrono::microseconds(n));
+}
+
+void HWLIB_WEAK wait_ms( int_fast32_t n ){
+   std::this_thread::sleep_for(std::chrono::milliseconds(n));
+}
+
+void HWLIB_WEAK wait_ns( int_fast32_t n ){ 
    std::this_thread::sleep_for(std::chrono::nanoseconds(n));
 }
-
-void wait_ns( int_fast32_t n ){ 
-   wait_us_busy( 1 + n / 1'000 );
-}
-
-void wait_us( int_fast32_t n ){ 
-   wait_us_busy( n );
-}
-
-void wait_ms( int_fast32_t n ){
-   wait_us( 1'000 * n );
-}  
 
 void uart_putc( char c ){
     std::putc(c, stdout);
@@ -263,54 +264,63 @@ public:
 
 }; // namespace test
 
-void HWLIB_WEAK uart_putc( char c ){
-   test::uart_putc( c );
-}
+namespace hwlib {
 
-bool HWLIB_WEAK uart_char_available(){
-   return test::uart_char_available();
-}
-
-char HWLIB_WEAK uart_getc( ){
-   return test::uart_getc();
-}
+namespace target = ::test;
+namespace test = ::test;
 
 #ifdef HWLIB_ONCE
 
+void HWLIB_WEAK uart_putc( char c ){
+   target::uart_putc(c);
+}
+
+bool HWLIB_WEAK uart_char_available(){
+   return 1;
+}
+
+char HWLIB_WEAK uart_getc( ){
+   return target::uart_getc();
+}
+
 uint64_t now_ticks(){
-   return test::now_ticks();
+   return target::now_ticks();
 }   
 
 uint64_t ticks_per_us(){
-   return test::ticks_per_us();
+   return target::ticks_per_us();
 }   
 
 uint64_t now_us(){
-   return now_ticks() / ticks_per_us();
+   return target::now_us();
 }   
 
-void wait_ns( int_fast32_t n ){ 
-   test::wait_ns( n );
+void wait_us_busy( int_fast32_t n ){ 
+   target::wait_us(n);
 }
 
-void wait_us_busy( int_fast32_t n ){
-   auto end = now_us() + n;
-   while( now_us() < end ){}
+void wait_ms_busy( int_fast32_t n ){
+   target::wait_ms(n);
+}
+
+void wait_ns_busy( int_fast32_t n ){ 
+   target::wait_ns(n);
 }
 
 void HWLIB_WEAK wait_us( int_fast32_t n ){ 
-   wait_us_busy( n );
+   target::wait_us(n);
 }
 
 void HWLIB_WEAK wait_ms( int_fast32_t n ){
-   while( n > 0 ){
-      wait_us( 1'000 );
-      --n;
-   }
+   target::wait_ms(n);
+}
+
+void HWLIB_WEAK wait_ns( int_fast32_t n ){ 
+   target::wait_ns(n);
 }
 
 #endif
 
-}; // namespace hwlib
+}; //namespace hwlib 
 
 #endif // HWLIB_TEST_H
