@@ -666,7 +666,13 @@ namespace hwlib {
       friend istream & operator>>( istream & stream, char & x ){
          x = stream.getc();            
          return stream;   
-      }           
+      }
+  
+      /// input operator for unsigned char
+      friend istream & operator>>( istream & stream, unsigned char & x ){
+         x = stream.getc();            
+         return stream;   
+      }
    };
    
    /// \brief
